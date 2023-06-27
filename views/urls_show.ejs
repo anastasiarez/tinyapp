@@ -1,3 +1,7 @@
+
+<!--A page to display a single URL and its shortened form
+    The end point for such a page will be in the format /urls/:id.-->
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -19,9 +23,12 @@
     <div class="card-body">
       <h5 class="card-title">TinyURL for: <%= longURL %></h5> 
       <!-- displays the long URL value in the template.-->
+     
+     
       <p class="card-text">
         Short URL ID: <a href="/u/<%= id %>"><%= id %></a> 
         <!--displays the ID value as a link for the shortened URL. Clicking on this link would take the user to the corresponding shortened URL.-->
+      
       </p>
       <p class="card-text">
         <a href="#">Create a new URL</a> 

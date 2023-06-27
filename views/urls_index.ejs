@@ -26,19 +26,26 @@
           <th scope="col">Long URL</th>
         </tr>
       </thead>
+
       <tbody>
         <% for (let id in urls) { %>
           <tr>
             <td>
               <%= id %>
+              <!--output the value of the id variable. It displays the key value of the current property in the urls object.-->
             </td>
             <td>
-              <%= urls[id] %>
+              <%= urls[id] %> 
+              <!--outputs the value of the urls object corresponding to the current id. It displays the corresponding URL for the current property key.-->
             </td>
           </tr>
           <% } %>
-      </tbody>
-    </table>
+          <!--<% %>: This is an EJS tag used to indicate JavaScript code that should be executed on the server-side.
+      
+          for (let id in urls) { }: This is a JavaScript loop that iterates over each property in the urls object. For each iteration, the loop assigns the property key to the id variable.-->
+
+        </tbody>
+      </table>
 
 
     <h3>Make URL Short</h3>
