@@ -18,3 +18,7 @@ app.listen(PORT, () => {
 app.get("/urls.json", (req, res) => { //adding routes
   res.json(urlDatabase);
 });
+
+app.get("/hello", (req, res) => { //sending html
+  res.send("<html><body>Hello <b>World</b></body></html>\n");
+});
