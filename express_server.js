@@ -75,9 +75,24 @@ app.post("/urls/:id/delete", (req, res) => {
   }
 });
 
+app.post("/urls/:id", (req, res) => {
+  const id = req.params.id;
+  const newLongURL = req.body.longURL; 
+  // Update the stored long URL based on the new value
+  urlDatabase[id] = newLongURL;
+  res.redirect("/urls");
+});
+
+app.get('/urls/:id/edit', (req, res) => {
+  const id = req.params.id;
+  // Retrieve the URL data from your storage or database based on the id
+  // Render the show page with the URL data
+  res.render('urls_show', { id });
+});
+
+
 //sending html
 //why do we need this page?
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
-

@@ -14,45 +14,46 @@
 
   <title>TinyApp</title>
 </head>
-<%- include('partials/_header')%>
 
-  <body>
+<body>
+  <%- include('partials/_header')%>
+
     <main style="margin: 1em;">
-
       <h3>My URLs</h3>
       <table class="table">
         <thead>
           <tr>
             <th scope="col">Short URL ID</th>
             <th scope="col">Long URL</th>
-            <th scope="col">Delete</th>
             <th scope="col">Edit</th>
+            <th scope="col">Delete</th>
           </tr>
         </thead>
 
         <tbody>
           <% for (let id in urls) { %>
-            <tr>
-              <td>
-                <form method="POST" action="/urls/<%= id %>/delete">
-                  <%= id %>
-              </td>
-
-              <td>
-                <%= urls[id] %>
-              </td>
-
-              <td>
-                <input type="submit" value="Delete" class="btn btn-danger btn-sm">
-              </td>
+          <tr>
+            <td>
+              <%= id %>
+            </td>
+            <td>
+              <%= urls[id] %>
+            </td>
+            <td>
+              <form method="POST" action="/urls/<%= id %>/edit">
+                <button type="submit" class="btn btn-success btn-sm">Edit</button>
               </form>
-            </tr>
-            <% } %>
+            </td>
+            <td>
+              <form method="POST" action="/urls/<%= id %>/delete">
+                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+              </form>
+            </td>
+          </tr>
+          <% } %>
         </tbody>
-
+        
       </table>
-
-
       <h3>Make URL Short</h3>
       <a href="https://#">Click Here</a>
 
@@ -70,6 +71,6 @@
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
       integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
       crossorigin="anonymous"></script>
-  </body>
+</body>
 
 </html>
