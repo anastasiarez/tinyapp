@@ -33,16 +33,16 @@
           <!--displays the ID value as a link for the shortened URL. Clicking on this link would take the user to the corresponding shortened URL.-->
         </p>
 
-      <p>
-        <form method="POST" action="/urls/<%= id %>/edit">
-          <label for="longURL">New URL:</label>
+        <p>
+        <form method="POST" action="/urls/<%= id %>">
+          <label for="longURL">Edit Current URL:</label>
           <input type="text" name="longURL" id="longURL" value="<%= longURL %>">
           <button type="submit">Submit</button>
         </form>
         </p>
 
         <p class="card-text">
-          <a href="#">Create a new URL</a>
+          <a href="/urls/new">Create a new URL</a>
           <!--is a placeholder for the link to create a new URL-->
         </p>
       </div>

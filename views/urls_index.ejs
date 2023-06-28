@@ -40,7 +40,7 @@
               <%= urls[id] %>
             </td>
             <td>
-              <form method="POST" action="/urls/<%= id %>/edit">
+              <form method="get" action="/urls/<%= id %>/edit">
                 <button type="submit" class="btn btn-success btn-sm">Edit</button>
               </form>
             </td>
@@ -55,7 +55,7 @@
         
       </table>
       <h3>Make URL Short</h3>
-      <a href="https://#">Click Here</a>
+      <a href="/urls/new">Click Here</a>
 
 
     </main>

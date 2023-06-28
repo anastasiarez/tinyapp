@@ -17,7 +17,7 @@ const urlDatabase = {
 };
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  res.redirect("/urls");
 });
 
 app.listen(PORT, () => {
@@ -41,22 +41,31 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
-  const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
-  res.render("urls_show", templateVars);
+  const id = req.params.id;
+  const longURL = urlDatabase[id];
+  if (longURL) {
+    const templateVars = { id, longURL };
+    res.render("urls_show", templateVars);
+  } else {
+    res.status(404).send("URL not found");
+  }
 });
 
 app.post("/urls", (req, res) => {
-  const id = generateRandomString(); 
-  const longURL = req.body.longURL; 
-  urlDatabase[id] = longURL; 
-  res.redirect(`/urls/${id}`);
-
-  console.log(req.body); 
+  const id = generateRandomString();
+  const longURL = req.body.longURL;
+  if (longURL) {
+    urlDatabase[id] = longURL;
+    res.redirect(`/urls/${id}`);
+    console.log(req.body);
+  } else {
+    res.status(400).send("Bad Request: Missing long URL");
+  }
 });
 
 app.get("/u/:id", (req, res) => {
-  const id = req.params.id; 
-  const longURL = urlDatabase[id]; 
+  const id = req.params.id;
+  const longURL = urlDatabase[id];
   if (longURL) {
     res.redirect(longURL);
   } else {
@@ -65,34 +74,38 @@ app.get("/u/:id", (req, res) => {
 });
 
 app.post("/urls/:id/delete", (req, res) => {
-  const id = req.params.id; // Get the id from the request parameter
-
+  const id = req.params.id;
   if (urlDatabase[id]) {
-    delete urlDatabase[id]; // Remove the URL resource using the delete operator
-    res.redirect("/urls"); // Redirect the client back to the urls_index page
+    delete urlDatabase[id];
+    res.redirect("/urls");
   } else {
-    res.status(404).send("URL not found"); // Return a 404 status if the id is not found in the urlDatabase
+    res.status(404).send("URL not found");
+  }
+});
+
+app.get('/urls/:id/edit', (req, res) => {
+  const id = req.params.id;
+  const longURL = urlDatabase[id];
+  if (longURL) {
+    res.render('urls_show', { id, longURL });
+  } else {
+    res.status(404).send("URL not found");
   }
 });
 
 app.post("/urls/:id", (req, res) => {
   const id = req.params.id;
-  const newLongURL = req.body.longURL; 
-  // Update the stored long URL based on the new value
-  urlDatabase[id] = newLongURL;
-  res.redirect("/urls");
+  const newLongURL = req.body.longURL;
+  if (newLongURL) {
+    urlDatabase[id] = newLongURL;
+    res.redirect("/urls");
+  } else {
+    res.status(400).send("Bad Request: Missing long URL");
+  }
 });
-
-app.get('/urls/:id/edit', (req, res) => {
-  const id = req.params.id;
-  // Retrieve the URL data from your storage or database based on the id
-  // Render the show page with the URL data
-  res.render('urls_show', { id });
-});
-
 
 //sending html
-//why do we need this page?
+
 app.get("/hello", (req, res) => {
   res.send("<html><body>Hello <b>World</b></body></html>\n");
 });
