@@ -21,12 +21,15 @@
   <div class="card text-center">
     <div class="card-header"></div>
     <div class="card-body">
-      <h5 class="card-title">TinyURL for: <%= longURL %></h5> 
+      <h5 class="card-title">
+        TinyURL for: <%= longURL %>
+      </h5> 
       <!-- displays the long URL value in the template.-->
      
      
       <p class="card-text">
-        Short URL ID: <a href="/u/<%= id %>"><%= id %></a> 
+        Short URL ID: <a href="/u/<%= id %>">
+          <%= id %></a> 
         <!--displays the ID value as a link for the shortened URL. Clicking on this link would take the user to the corresponding shortened URL.-->
       
       </p>
