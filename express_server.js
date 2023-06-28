@@ -64,6 +64,16 @@ app.get("/u/:id", (req, res) => {
   }
 });
 
+app.post("/urls/:id/delete", (req, res) => {
+  const id = req.params.id; // Get the id from the request parameter
+
+  if (urlDatabase[id]) {
+    delete urlDatabase[id]; // Remove the URL resource using the delete operator
+    res.redirect("/urls"); // Redirect the client back to the urls_index page
+  } else {
+    res.status(404).send("URL not found"); // Return a 404 status if the id is not found in the urlDatabase
+  }
+});
 
 //sending html
 //why do we need this page?
