@@ -5,8 +5,12 @@ const PORT = 8080;
 //standart way to tell express to use ejs files
 app.set("view engine", "ejs");
 
+app.use(express.urlencoded({ extended: true }));
 
-
+function generateRandomString() {
+  let id = Math.random().toString(36).slice(7);
+  return id;
+}
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -36,6 +40,11 @@ app.get("/urls", (req, res) => {
   res.render("urls_index", templateVars);
 });
 
+//a GET route to render the urls_new.ejs template (given below) in the browser, to present the form to the user
+app.get("/urls/new", (req, res) => {
+  res.render("urls_new");
+});
+
 //Route to render urls_show.ejs template
 //The : in front of id indicates that id is a route parameter. This means that the value in this part of the url will be available in the req.params object.
 //Inside the route handler, a new templateVars object is created. It contains two properties: id, which stores the value of req.params.id, and longURL, which retrieves the associated longURL from the urlDatabase using urlDatabase[req.params.id].
@@ -45,6 +54,11 @@ app.get("/urls/:id", (req, res) => {
   res.render("urls_show", templateVars);
 });
 
+//route that will match this POST request and handle it. 
+app.post("/urls", (req, res) => {
+  console.log(req.body); // Log the POST request body to the console
+  res.send("Ok"); // Respond with 'Ok' (we will replace this)
+});
 
 //sending html
 //why do we need this page?
