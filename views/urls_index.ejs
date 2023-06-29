@@ -4,12 +4,9 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
-
-
   <!-- Bootstrap CSS -->
   <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
     integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous" />
-
 
 
   <title>TinyApp</title>
@@ -17,7 +14,6 @@
 
 <body>
   <%- include('partials/_header')%>
-
     <main style="margin: 1em;">
       <h3>My URLs</h3>
       <table class="table">
@@ -29,35 +25,29 @@
             <th scope="col">Delete</th>
           </tr>
         </thead>
-
         <tbody>
           <% for (let id in urls) { %>
-          <tr>
-            <td>
-              <%= id %>
-            </td>
-            <td>
-              <%= urls[id] %>
-            </td>
-            <td>
-              <form method="get" action="/urls/<%= id %>/edit">
-                <button type="submit" class="btn btn-success btn-sm">Edit</button>
-              </form>
-            </td>
-            <td>
-              <form method="POST" action="/urls/<%= id %>/delete">
-                <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-              </form>
-            </td>
-          </tr>
-          <% } %>
+            <tr>
+              <td>
+                <%= id %>
+              </td>
+              <td>
+                <%= urls[id] %>
+              </td>
+              <td>
+                <form method="get" action="/urls/<%= id %>">
+                  <button type="submit" class="btn btn-success btn-sm">Edit</button>
+                </form>
+              </td>
+              <td>
+                <form method="POST" action="/urls/<%= id %>/delete">
+                  <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                </form>
+              </td>
+            </tr>
+            <% } %>
         </tbody>
-        
       </table>
-      <h3>Make URL Short</h3>
-      <a href="/urls/new">Click Here</a>
-
-
     </main>
 
 
