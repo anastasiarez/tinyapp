@@ -1,9 +1,3 @@
-<!--Partial templates, or partials, can keep our code DRY by avoiding repetition of elements on the same page (like list items) or across different pages (like headers or footers).
-
-Even if page elements are never repeated, partials can be used to logically separate them from the other parts of their page, keeping templates from becoming too long and difficult to manage.
-
-Notice that the name of this file starts with an underscore (_). This is to signify that it's a partial, in this case, a header partial.-->
-
 <header>
   <nav class="navbar navbar-expand-md navbar-dark bg-success">
     <a class="navbar-brand" href="/urls">TinyApp</a>
@@ -22,12 +16,14 @@ Notice that the name of this file starts with an underscore (_). This is to sign
       <span class="navbar-text">
         Logged in as <%= username %>
       </span>
-      <% } else { %>
-
-        <form method="POST" action="/login">
-          <input type="text" name="username" id="username">
-          <button type="submit">Login</button>
-        </form>
-        <% } %>
+      <form method="POST" action="/logout">
+        <button type="submit">Logout</button>
+      </form>
+    <% } else { %>
+      <form method="POST" action="/login">
+        <input type="text" name="username" id="username">
+        <button type="submit">Login</button>
+      </form>
+    <% } %>
   </nav>
 </header>

@@ -18,8 +18,6 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 
-
-
 app.get("/", (req, res) => {
   res.redirect("/urls");
 });
@@ -29,18 +27,21 @@ app.listen(PORT, () => {
 });
 
 
-
-
 //ADDING ROUTES
 
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
+app.get("/urls/new", (req, res) => {
+  const templateVars = { username: req.cookies["username"] };
+  res.render("urls_new", templateVars);
+});
+
 app.get("/urls", (req, res) => {
   const templateVars = {
     urls: urlDatabase,
-    username: req.cookies.username
+    username: req.cookies["username"]
   };
   res.render("urls_index", templateVars);
 });
@@ -48,12 +49,8 @@ app.get("/urls", (req, res) => {
 app.get("/urls/:id", (req, res) => {
   const id = req.params.id;
   const longURL = urlDatabase[id];
-  if (longURL) {
-    const templateVars = { id, longURL, username: req.cookies["username"] };
-    res.render("urls_show", templateVars);
-  } else {
-    res.status(404).send("URL not found");
-  }
+  const templateVars = { id, longURL, username: req.cookies["username"] };
+  res.render("urls_show", templateVars);
 });
 
 app.post("/urls", (req, res) => {
@@ -62,9 +59,8 @@ app.post("/urls", (req, res) => {
   if (longURL) {
     urlDatabase[id] = longURL;
     res.redirect(`/urls/${id}`);
-    console.log(req.body);
   } else {
-    res.status(400).send("Bad Request: Missing long URL");
+    res.status(400).send("Please provide long URL");
   }
 });
 
@@ -84,19 +80,7 @@ app.post("/urls/:id/delete", (req, res) => {
     delete urlDatabase[id];
     res.redirect("/urls");
   } else {
-    res.status(404).send("URL not found");
-  }
-});
-
-
-app.get('/urls/:id/edit', (req, res) => {
-  const id = req.params.id;
-  const longURL = urlDatabase[id];
-  if (longURL) {
-    const templateVars = { id, longURL, username: req.cookies["username"] };
-    res.render('urls_show', templateVars);
-  } else {
-    res.status(404).send("URL not found");
+    res.status(404).send("Failed to delete URL");
   }
 });
 
@@ -107,13 +91,18 @@ app.post("/urls/:id", (req, res) => {
     urlDatabase[id] = newLongURL;
     res.redirect("/urls");
   } else {
-    res.status(400).send("Bad Request: Missing long URL");
+    res.status(400).send("Missing long URL");
   }
 });
 
 app.post("/login", (req, res) => {
   const username = req.body.username;
   res.cookie("username", username);
+  res.redirect("/urls");
+});
+
+app.post("/logout", (req, res) => {
+  res.clearCookie("username");
   res.redirect("/urls");
 });
 
