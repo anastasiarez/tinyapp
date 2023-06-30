@@ -154,6 +154,9 @@ app.post("/urls/:id", (req, res) => {
   }
 });
 
+app.get("/login", (req, res) => {
+  res.render("login")
+});
 
 //The code extracts the email and password from the request body obj
 app.post("/login", (req, res) => {
@@ -222,7 +225,6 @@ app.post("/register", (req, res) => {
   res.cookie("user_id", userId);
   res.redirect("/urls");
 });
-
 
 
 
