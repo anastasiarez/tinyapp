@@ -1,3 +1,5 @@
+<!-- When new URL submitted this page shows the short version of the URL -->
+
 <!DOCTYPE html>
 <html lang="en">
 
@@ -16,11 +18,14 @@
       <div class="card-header"></div>
       <div class="card-body">
         <h5 class="card-title">
-          TinyURL for: <%= longURL %>
+          Your TinyURL for: <%= longURL %>
         </h5>
         <p class="card-text">
           Short URL ID: <a href="/u/<%= id %>"><%= id %></a>
         </p>
+        <div class="card text-center">
+          <div class="card-header"></div>
+          <div class="card-body">
         <p>
         <form method="POST" action="/urls/<%= id %>">
           <label for="longURL">Edit Current URL:</label>

@@ -1,17 +1,20 @@
+//In Express.js, req.params and req.body are properties of the req object, which represents the HTTP request being handled by the server.
+//req.body contains the parsed request body data sent by the client. 
+
+
 const express = require("express");
 const app = express();
 const PORT = 8080;
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcrypt');
+//const SALT_ROUNDS = 10;
 
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 
-function generateRandomString() {
-  const str = Math.random().toString(36).slice(7);
-  return str;
-}
+//DATABASES
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -22,7 +25,7 @@ const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    password: "1a1a2a",
   },
   user2RandomID: {
     id: "user2RandomID",
@@ -32,41 +35,74 @@ const users = {
 };
 
 
+//SUPPORTING FUNCTIONS
 
-app.get("/", (req, res) => {
-  res.redirect("/urls");
-});
+function generateRandomString() {
+  const str = Math.random().toString(36).slice(7);
+  return str;
+}
+
+function getUserByEmail(email) {
+  for (const userId in users) {
+    const user = users[userId];
+    if (user.email === email) {
+      return user;
+    }
+  }
+  return null;
+}
+
+
+// ROUTES
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
 
-
-//ADDING ROUTES
-
 app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
+app.get("/", (req, res) => {
+  res.redirect("/urls");
+});
+
+
+// when new URL submitted: retrieve the user object based on the user_id cookie and pass it to the template and access the user's information in the template.
 
 app.get("/urls/new", (req, res) => {
-  const templateVars = { username: req.cookies["username"] };
+  const user = users[req.cookies.user_id];
+  const templateVars = { user };
   res.render("urls_new", templateVars);
 });
 
+
+//main page with all urls per user
 app.get("/urls", (req, res) => {
+  const userID = req.cookies.user_id;
+  const user = users[userID];
   const templateVars = {
+    user: user,
     urls: urlDatabase,
-    username: req.cookies["username"]
   };
   res.render("urls_index", templateVars);
 });
 
+
+// render the "urls_show" to display the details of a specific URL identified by the id parameter.
+//:id is short URL - "b2xVn2"
+
 app.get("/urls/:id", (req, res) => {
   const id = req.params.id;
+  // It retrieves the id parameter from the request's URL. - /urls/b2xVn2
   const longURL = urlDatabase[id];
-  const templateVars = { id, longURL, username: req.cookies["username"] };
+  const user = users[req.cookies.user_id];
+  const templateVars = { id, longURL, user };
   res.render("urls_show", templateVars);
+  //The template can access the values of id, longURL, and user and display the details of the URL.
 });
+
+
+// Create new URL - POST handles the request. It generates a unique ID, retrieves the "longURL" value from the request body, and stores it in the urlDatabase object. It redirects the client to the page displaying the details of the newly created URL.
 
 app.post("/urls", (req, res) => {
   const id = generateRandomString();
@@ -74,10 +110,14 @@ app.post("/urls", (req, res) => {
   if (longURL) {
     urlDatabase[id] = longURL;
     res.redirect(`/urls/${id}`);
+    //redirects the client to the "/urls/:id" path, where ":id" is replaced with the generated ID. 
   } else {
     res.status(400).send("Please provide long URL");
   }
 });
+
+
+// /u/:id endpoint is designed to redirect the user to the long URL associated with the captured id
 
 app.get("/u/:id", (req, res) => {
   const id = req.params.id;
@@ -89,6 +129,8 @@ app.get("/u/:id", (req, res) => {
   }
 });
 
+
+// Delete id from the urls page / urlDatabase
 app.post("/urls/:id/delete", (req, res) => {
   const id = req.params.id;
   if (urlDatabase[id]) {
@@ -99,6 +141,8 @@ app.post("/urls/:id/delete", (req, res) => {
   }
 });
 
+
+// Edit the URL
 app.post("/urls/:id", (req, res) => {
   const id = req.params.id;
   const newLongURL = req.body.longURL;
@@ -110,35 +154,54 @@ app.post("/urls/:id", (req, res) => {
   }
 });
 
+
+//The code extracts the email and password from the request body obj
 app.post("/login", (req, res) => {
-  const username = req.body.username;
-  res.cookie("username", username);
-  res.redirect("/urls");
+  const { email, password } = req.body;
+  const user = getUserByEmail(email);
+  if (user && bcrypt.compareSync(password, user.password)) {
+
+    //If a user object is found (user is truthy) and the provided password matches the stored password for that user (using bcrypt.compareSync), the code proceeds.
+
+    res.cookie("user_id", user.id);
+    res.redirect("/urls");
+  } else {
+    res.status(401).send("Invalid email or password");
+  }
 });
 
+////////////////////////////////////////////////////////////////////////////////
+// const salt = bcrypt.genSaltSync(SALT_ROUNDS);
+// const hash = bcrypt.hashSync(PASSWORD, salt);
+
 app.post("/logout", (req, res) => {
-  res.clearCookie("username");
+  res.clearCookie("user_id");
   res.redirect("/urls");
 });
 
 app.get("/register", (req, res) => {
-  const templateVars = {
-    username: req.cookies.username 
-  };
+  const user = req.cookies.user_id ? users[req.cookies.user_id] : null;
+
+  //ternary operator: condition ? expression1 : expression2
+  //The condition is evaluated. If the condition is truthy, the expression before the : is executed. If it's falsy, the expression after the : is executed. 
+
+  //The condition is req.cookies.user_id, which checks if the user_id cookie exists and has a truthy value.
+  // If the user_id cookie exists, users[req.cookies.user_id] is assigned to user, meaning the corresponding user object is retrieved from the users object.
+  // If the user_id cookie does not exist or is falsy, null is assigned to user.
+
+  const templateVars = { user };
   res.render("register", templateVars);
 });
 
 
+
 app.post("/register", (req, res) => {
   const { email, password } = req.body;
-
-  // Check if email or password is empty
   if (!email || !password) {
     res.status(400).send("Email and password are required.");
     return;
   }
 
-  // Check if the email is already registered
   for (const userId in users) {
     const user = users[userId];
     if (user.email === email) {
@@ -147,25 +210,21 @@ app.post("/register", (req, res) => {
     }
   }
 
-  // Generate a random user ID
   const userId = generateRandomString();
 
-  // Create a new user object
   const newUser = {
     id: userId,
-    email: email,
-    password: password,
+    email,
+    password
   };
 
-  // Add the new user to the users object
   users[userId] = newUser;
-
-  // Set the user_id cookie containing the new user's ID
   res.cookie("user_id", userId);
-
-  // Redirect the user to the /urls page
   res.redirect("/urls");
 });
+
+
+
 
 
 
