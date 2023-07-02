@@ -19,8 +19,15 @@ app.use(cookieParser());
 //DATABASES
 
 const urlDatabase = {
-  "amsmwl": "https://savelife.in.ua/en/",
-  "usa4ka": "https://ukraine.ua/invest-trade/digitalization/"
+  b6UTxQ: {
+    longURL: "https://savelife.in.ua/en/",
+    userID: "https://savelife.in.ua/en/"
+  },
+
+  i3BoGr: {
+    longURL: "https://ukraine.ua/invest-trade/digitalization/",
+    userID: "usa4ka"
+  },
 };
 
 
@@ -55,6 +62,7 @@ function getUserByEmail(email) {
   return null;
 }
 
+const
 
 // ROUTES
 
@@ -129,19 +137,17 @@ app.get("/login", (req, res) => {
 });
 
 //During loging process the code extracts the email and password from the request body obj, checks if user exists in the getUserByEmail database
+
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
   const user = getUserByEmail(email);
-  if (user) {
-    if (bcrypt.compareSync(password, user.password)) {
-
-      //If a user object is found (user is truthy) and the provided password matches the stored password for that user (using bcrypt.compareSync), the code proceeds.
-
-      res.cookie("user_id", user.id);
-      res.redirect("/urls");
-    } else {
-      res.status(403).send("Incorrect email or password");
-    }
+  if (!user) {
+    res.status(403).send("Email not registered. Please create an account.");
+  } else if (bcrypt.compareSync(password, user.password)) {
+    res.cookie("user_id", user.id);
+    res.redirect("/urls");
+  } else {
+    res.status(403).send("Incorrect email or password");
   }
 });
 
@@ -189,13 +195,14 @@ app.get("/urls", (req, res) => {
 
 app.get("/urls/:id", (req, res) => {
   const id = req.params.id;
+  const url = urlDatabase[id];
   // It retrieves the id parameter from the request's URL. - /urls/b2xVn2
-  const longURL = urlDatabase[id];
+  const longURL = url ? url.longURL : null;
   const user = users[req.cookies.user_id];
   if (!user) {
     res.redirect("/login");
   } else {
-    const templateVars = { id, longURL, user };
+    const templateVars = { id: id, longURL: longURL, user: user };
     res.render("urls_show", templateVars);
   }
 });
@@ -211,7 +218,10 @@ app.post("/urls", (req, res) => {
     const id = generateRandomString();
     const longURL = req.body.longURL;
     if (longURL) {
-      urlDatabase[id] = longURL;
+      urlDatabase[id] = {
+        longURL: longURL,
+        userID: user.id
+      };
       res.redirect(`/urls/${id}`);
       //redirects the client to the "/urls/:id" path, where ":id" is replaced with the generated ID. 
     } else {
@@ -225,9 +235,9 @@ app.post("/urls", (req, res) => {
 
 app.get("/u/:id", (req, res) => {
   const id = req.params.id;
-  const longURL = urlDatabase[id];
-  if (longURL) {
-    res.redirect(longURL);
+  const url = urlDatabase[id];
+  if (url) {
+    res.redirect(url.longURL);
   } else {
     res.status(404).send("URL not found");
   }
@@ -239,11 +249,12 @@ app.get("/u/:id", (req, res) => {
 //*******************************************If a site visitor is not loged they cannot access /urls at all. They stay on login page. We want them to see My URLs page but not be able to delete or edit
 app.post("/urls/:id/delete", (req, res) => {
   const user = users[req.cookies.user_id];
-    if (!user) {
+  if (!user) {
     res.status(401).send("You must be logged in order to delete URLs.");
   } else {
     const id = req.params.id;
-    if (urlDatabase[id]) {
+    const url = urlDatabase[id];
+    if (url && url.userID === user.id) {
       delete urlDatabase[id];
       res.redirect("/urls");
     } else {
@@ -259,15 +270,20 @@ app.post("/urls/:id/delete", (req, res) => {
 app.post("/urls/:id", (req, res) => {
   const user = users[req.cookies.user_id];
   if (!user) {
-    res.status(401).send("You must be logged in order to delete URLs.");
+    res.status(401).send("You must be logged in order to edit URLs.");
   } else {
     const id = req.params.id;
+    const url = urlDatabase[id];
     const newLongURL = req.body.longURL;
-    if (newLongURL) {
-      urlDatabase[id] = newLongURL;
-      res.redirect("/urls");
+    if (url && url.userID === user.id) {
+      if (newLongURL) {
+        urlDatabase[id].longURL = newLongURL;
+        res.redirect("/urls");
+      } else {
+        res.status(400).send("Missing long URL");
+      }
     } else {
-      res.status(400).send("Missing long URL");
+      res.status(404).send("URL not found");
     }
   }
 });
