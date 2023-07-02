@@ -6,28 +6,46 @@
 
 const express = require("express");
 const cookieSession = require('cookie-session');
+const { getUserByEmail} = require("./helpers");
+
 const bcrypt = require('bcrypt');
 const app = express();
 const PORT = 8080;
 const SALT_ROUNDS = 10;
 
-
-
-app.set("view engine", "ejs");
-app.use(express.urlencoded({ extended: true }));
 app.use(cookieSession({
   name: 'session',
   keys: ['secret-key'],
-  maxAge: 24 * 60 * 60 * 1000
+  maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
 }));
 
+app.use(express.urlencoded({ extended: true }));
+app.set("view engine", "ejs");
+
+
+// SUPPORTING FUNCTIONS
+
+function generateRandomString() {
+  const str = Math.random().toString(36).slice(7);
+  return str;
+}
+
+const urlsForUser = (id) => {
+  const userURLs = {};
+  for (const url in urlDatabase) {
+    if (urlDatabase[url].userID === id) {
+      userURLs[url] = urlDatabase[url];
+    }
+  }
+  return userURLs;
+};
 
 //DATABASES
 
 const urlDatabase = {
   b6UTxQ: {
     longURL: "https://savelife.in.ua/en/",
-    userID: "https://savelife.in.ua/en/"
+    userID: "rrsrhe"
   },
 
   i3BoGr: {
@@ -50,33 +68,6 @@ const users = {
   },
 };
 
-
-//SUPPORTING FUNCTIONS
-
-function generateRandomString() {
-  const str = Math.random().toString(36).slice(7);
-  return str;
-}
-
-function getUserByEmail(email) {
-  for (const userId in users) {
-    const user = users[userId];
-    if (user.email === email) {
-      return user;
-    }
-  }
-  return null;
-}
-
-const urlsForUser = (id) => {
-  const userURLs = {};
-  for (const url in urlDatabase) {
-    if (urlDatabase[url].userID === id) {
-      userURLs[url] = urlDatabase[url];
-    }
-  }
-  return userURLs;
-};
 
 // ROUTES
 
@@ -154,9 +145,9 @@ app.get("/login", (req, res) => {
 
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
-  const user = getUserByEmail(email);
+  const user = getUserByEmail(email, users);
   if (!user) {
-    res.status(403).send("Email not registered. Please create an account.");
+    res.status(403).send("Email is not registered. Please create an account.");
   } else if (bcrypt.compareSync(password, user.password)) {
     req.session.user_id = user.id;
     res.redirect("/urls");
@@ -178,7 +169,6 @@ app.get("/urls/new", (req, res) => {
   const user = users[req.session.user_id];
   if (!user) {
     res.status(401).send("Please log in to create new URLs.");
-    //res.render("/login");
   } else {
     const templateVars = { user };
     res.render("urls_new", templateVars);
@@ -192,9 +182,7 @@ app.get("/urls", (req, res) => {
   const user = users[userID];
 
   if (!user) {
-    //*******************************************
     res.status(401).send("You must be logged in to see My URLs.");
-    res.render("/login");
   } else {
     const userURLs = urlsForUser(userID);
     const templateVars = {
@@ -215,17 +203,16 @@ app.get("/urls/:id", (req, res) => {
   const url = urlDatabase[id];
 
   if (!user) {
-    res.status(401).send("You must be logged in to view this URL.");
-    //res.redirect("/login");
+    res.status(401).send("You must be logged in to view this URL."); //****
   } else if (!url) {
     res.status(404).send("URL not found.");
   } else if (url.userID !== userID) {
-    res.status(403).send("You do not have permission to view this URL.");
+    res.status(403).send("You do not have permission to view this URL."); //****
   } else {
     const templateVars = {
       id: id,
       longURL: url.longURL,
-      user: userID
+      user: user
     };
     res.render("urls_show", templateVars);
   }
@@ -237,11 +224,13 @@ app.get("/urls/:id", (req, res) => {
 app.post("/urls", (req, res) => {
   const user = users[req.session.user_id];
   if (!user) {
-    res.status(401).send("You must be logged in to shorten URLs.");//*******************************************this is not printed to the user. If they are not loged in they cannot access /urls at all. They stay on login page.
+    res.status(401).send("Please login");
   } else {
     const id = generateRandomString();
     const longURL = req.body.longURL;
-    if (longURL) {
+    const urlPattern = /^(ftp|http|https):\/\/[^ "]+$/;
+
+    if (longURL && urlPattern.test(longURL)) {
       urlDatabase[id] = {
         longURL: longURL,
         userID: user.id
@@ -249,7 +238,7 @@ app.post("/urls", (req, res) => {
       res.redirect(`/urls/${id}`);
       //redirects the client to the "/urls/:id" path, where ":id" is replaced with the generated ID. 
     } else {
-      res.status(400).send("Please provide long URL");
+      res.status(400).send("Please provide a valid URL (include http:// or https://)");
     }
   }
 });
@@ -270,28 +259,25 @@ app.get("/u/:id", (req, res) => {
 
 // Delete id from the urls page (urlDatabase)
 
-//*******************************************If a site visitor is not loged they cannot access /urls at all. They stay on login page. We want them to see My URLs page but not be able to delete or edit
 app.post("/urls/:id/delete", (req, res) => {
   const user = users[req.session.user_id];
   const id = req.params.id;
   const url = urlDatabase[id];
 
   if (!user) {
-    res.status(401).send("You must be logged in order to delete URLs.");
+    res.status(401).send("You must be logged in order to delete URLs.");//****
   } else if (!url) {
     res.status(404).send("URL not found");
   } else if (url.userID !== user.id) {
-    res.status(401).send("You do not have permission to edit this URL.");
+    res.status(401).send("You do not have permission to delete this URL.");//****
   } else {
-      delete urlDatabase[id];
-      res.redirect("/urls");
+    delete urlDatabase[id];
+    res.redirect("/urls");
   }
 });
 
 
 // Edit the URL
-
-//*******************************************If a site visitor is not loged they cannot access /urls at all. They stay on login page. We want them to see My URLs page but not be able to delete or edit
 
 app.post("/urls/:id", (req, res) => {
   const user = users[req.session.user_id];
@@ -299,19 +285,20 @@ app.post("/urls/:id", (req, res) => {
   const url = urlDatabase[id];
 
   if (!user) {
-    res.status(401).send("You must be logged in order to edit URLs.");
+    res.status(401).send("You must be logged in order to edit URLs.");//****
   } else if (!url) {
     res.status(404).send("URL not found");
   } else if (url.userID !== user.id) {
-    res.status(401).send("You do not have permission to edit this URL.");
+    res.status(401).send("You do not have permission to edit this URL.");//****
   } else {
     const newLongURL = req.body.longURL;
-    if (newLongURL) {
+    const urlPattern = /^(ftp|http|https):\/\/[^ "]+$/;
+
+    if (newLongURL && urlPattern.test(newLongURL)) {
       urlDatabase[id].longURL = newLongURL;
       res.redirect("/urls");
     } else {
-      res.status(400).send("Missing long URL");
+      res.status(400).send("Please provide a valid URL (include http/ https)");
     }
   }
 });
-
