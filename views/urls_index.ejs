@@ -1,4 +1,4 @@
-<!-- Main page with URLs -->
+<!-- Main page with URLs ad -->
 
 <!DOCTYPE html>
 <html lang="en">
@@ -34,12 +34,15 @@
                 <%= id %>
               </td>
               <td>
-                <%= urls[id] %>
+                <a href="<%= urls[id] %>"><%= urls[id] %></a>
               </td>
               <td>
                 <form method="get" action="/urls/<%= id %>">
-                  <button type="submit" class="btn btn-success btn-sm">Edit</button>
+                  <button type="submit" class="btn btn-success btn-sm">
+                    <a href="/urls/<%= id %>" style="text-decoration: none; color: inherit;">Edit</a>
+                  </button>
                 </form>
+                
               </td>
               <td>
                 <form method="POST" action="/urls/<%= id %>/delete">

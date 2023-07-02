@@ -158,21 +158,23 @@ app.get("/urls/new", (req, res) => {
   const user = users[req.cookies.user_id];
   const templateVars = { user };
   if (!user) {
-    res.redirect("/login");
+    res.status(401).send("Please log in to create new URLs.");
+    res.render("/login");
   } else {
     res.render("urls_new", templateVars);
   }
+
 });
 
 
-//Show main page with all urls per user
 app.get("/urls", (req, res) => {
   const userID = req.cookies.user_id;
   const user = users[userID];
 
   if (!user) {
-    const error = "You must be logged in to shorten URLs."; //this is not printed to the user. If they are not loged in they cannot access /urls at all. They stay on login page.*******************************************
-    res.status(401).render("login", { user: null, error});
+    //*******************************************
+    res.status(401).send("You must be logged in to see My URLs.");
+    res.render("/login");
   } else {
     const templateVars = {
       user: user,
@@ -181,7 +183,6 @@ app.get("/urls", (req, res) => {
     res.render("urls_index", templateVars);
   }
 });
-
 
 // render the "urls_show" to display the details of a specific URL identified by the id parameter.
 //:id is short URL - "b2xVn2"
@@ -205,7 +206,7 @@ app.get("/urls/:id", (req, res) => {
 app.post("/urls", (req, res) => {
   const user = users[req.cookies.user_id];
   if (!user) {
-    res.status(401).send("You must be logged in to shorten URLs.");//this is not printed to the user. If they are not loged in they cannot access /urls at all. They stay on login page.*******************************************
+    res.status(401).send("You must be logged in to shorten URLs.");//*******************************************this is not printed to the user. If they are not loged in they cannot access /urls at all. They stay on login page.
   } else {
     const id = generateRandomString();
     const longURL = req.body.longURL;
@@ -235,11 +236,10 @@ app.get("/u/:id", (req, res) => {
 
 // Delete id from the urls page (urlDatabase)
 
-//If they are not loged they cannot access /urls at all. They stay on login page. We want the site visitor to see My URLs page but not be able to delete or edit*******************************************
+//*******************************************If a site visitor is not loged they cannot access /urls at all. They stay on login page. We want them to see My URLs page but not be able to delete or edit
 app.post("/urls/:id/delete", (req, res) => {
   const user = users[req.cookies.user_id];
-  const templateVars = { user };
-  if (!templateVars.user) {
+    if (!user) {
     res.status(401).send("You must be logged in order to delete URLs.");
   } else {
     const id = req.params.id;
@@ -255,11 +255,10 @@ app.post("/urls/:id/delete", (req, res) => {
 
 // Edit the URL
 
-//If they are not loged they cannot access /urls at all. They stay on login page. We want the site visitor to see My URLs page but not be able to delete or edit*******************************************
+//*******************************************If a site visitor is not loged they cannot access /urls at all. They stay on login page. We want them to see My URLs page but not be able to delete or edit
 app.post("/urls/:id", (req, res) => {
   const user = users[req.cookies.user_id];
-  const templateVars = { user };
-  if (!templateVars.user) {
+  if (!user) {
     res.status(401).send("You must be logged in order to delete URLs.");
   } else {
     const id = req.params.id;
