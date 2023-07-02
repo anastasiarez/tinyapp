@@ -5,15 +5,21 @@
 
 
 const express = require("express");
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const bcrypt = require('bcrypt');
 const app = express();
 const PORT = 8080;
 const SALT_ROUNDS = 10;
 
+
+
 app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['secret-key'],
+  maxAge: 24 * 60 * 60 * 1000
+}));
 
 
 //DATABASES
@@ -35,12 +41,12 @@ const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "1a1a2a",
+    password: "gloryToUkraine",
   },
   user2RandomID: {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk",
+    password: "Bandera",
   },
 };
 
@@ -92,7 +98,7 @@ app.get("/", (req, res) => {
 //User Registration
 
 app.get("/register", (req, res) => {
-  const user = req.cookies.user_id ? users[req.cookies.user_id] : null;
+  const user = req.session.user_id ? users[req.session.user_id] : null;
   const templateVars = { user };
   if (user) {
     res.redirect("/urls");
@@ -127,7 +133,7 @@ app.post("/register", (req, res) => {
   };
 
   users[userId] = newUser;
-  res.cookie("user_id", userId);
+  req.session.user_id = userId;
   res.redirect("/urls/new");
 });
 
@@ -136,7 +142,7 @@ app.post("/register", (req, res) => {
 
 //code checks if user's info is stored in cookies and then redirects to the appropriate pages
 app.get("/login", (req, res) => {
-  const user = req.cookies.user_id ? users[req.cookies.user_id] : null;
+  const user = req.session.user_id ? users[req.session.user_id] : null;
   if (user) {
     res.redirect("/urls");
   } else {
@@ -152,7 +158,7 @@ app.post("/login", (req, res) => {
   if (!user) {
     res.status(403).send("Email not registered. Please create an account.");
   } else if (bcrypt.compareSync(password, user.password)) {
-    res.cookie("user_id", user.id);
+    req.session.user_id = user.id;
     res.redirect("/urls");
   } else {
     res.status(403).send("Incorrect email or password");
@@ -161,7 +167,7 @@ app.post("/login", (req, res) => {
 
 
 app.post("/logout", (req, res) => {
-  res.clearCookie("user_id");
+  req.session = null;
   res.redirect("/login");
 });
 
@@ -169,7 +175,7 @@ app.post("/logout", (req, res) => {
 // New URL page: retrieve the user object based on the user_id cookie and pass it to the template and access the user's information in the template. If user's info is not found in cookies they redirected to login page
 
 app.get("/urls/new", (req, res) => {
-  const user = users[req.cookies.user_id];
+  const user = users[req.session.user_id];
   if (!user) {
     res.status(401).send("Please log in to create new URLs.");
     //res.render("/login");
@@ -182,7 +188,7 @@ app.get("/urls/new", (req, res) => {
 
 
 app.get("/urls", (req, res) => {
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   const user = users[userID];
 
   if (!user) {
@@ -203,7 +209,7 @@ app.get("/urls", (req, res) => {
 //:id is short URL - "b2xVn2"
 
 app.get("/urls/:id", (req, res) => {
-  const userID = req.cookies.user_id;
+  const userID = req.session.user_id;
   const user = users[userID];
   const id = req.params.id;
   const url = urlDatabase[id];
@@ -229,7 +235,7 @@ app.get("/urls/:id", (req, res) => {
 // Create new URL: It generates a unique ID, retrieves the "longURL" value from the request body, and stores it in the urlDatabase object. It redirects the client to the page displaying the details of the newly created URL.
 
 app.post("/urls", (req, res) => {
-  const user = users[req.cookies.user_id];
+  const user = users[req.session.user_id];
   if (!user) {
     res.status(401).send("You must be logged in to shorten URLs.");//*******************************************this is not printed to the user. If they are not loged in they cannot access /urls at all. They stay on login page.
   } else {
@@ -266,7 +272,7 @@ app.get("/u/:id", (req, res) => {
 
 //*******************************************If a site visitor is not loged they cannot access /urls at all. They stay on login page. We want them to see My URLs page but not be able to delete or edit
 app.post("/urls/:id/delete", (req, res) => {
-  const user = users[req.cookies.user_id];
+  const user = users[req.session.user_id];
   const id = req.params.id;
   const url = urlDatabase[id];
 
@@ -286,8 +292,9 @@ app.post("/urls/:id/delete", (req, res) => {
 // Edit the URL
 
 //*******************************************If a site visitor is not loged they cannot access /urls at all. They stay on login page. We want them to see My URLs page but not be able to delete or edit
+
 app.post("/urls/:id", (req, res) => {
-  const user = users[req.cookies.user_id];
+  const user = users[req.session.user_id];
   const id = req.params.id;
   const url = urlDatabase[id];
 
