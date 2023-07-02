@@ -62,7 +62,15 @@ function getUserByEmail(email) {
   return null;
 }
 
-const
+const urlsForUser = (id) => {
+  const userURLs = {};
+  for (const url in urlDatabase) {
+    if (urlDatabase[url].userID === id) {
+      userURLs[url] = urlDatabase[url];
+    }
+  }
+  return userURLs;
+};
 
 // ROUTES
 
@@ -162,11 +170,11 @@ app.post("/logout", (req, res) => {
 
 app.get("/urls/new", (req, res) => {
   const user = users[req.cookies.user_id];
-  const templateVars = { user };
   if (!user) {
     res.status(401).send("Please log in to create new URLs.");
-    res.render("/login");
+    //res.render("/login");
   } else {
+    const templateVars = { user };
     res.render("urls_new", templateVars);
   }
 
@@ -182,9 +190,10 @@ app.get("/urls", (req, res) => {
     res.status(401).send("You must be logged in to see My URLs.");
     res.render("/login");
   } else {
+    const userURLs = urlsForUser(userID);
     const templateVars = {
       user: user,
-      urls: urlDatabase
+      urls: userURLs
     };
     res.render("urls_index", templateVars);
   }
@@ -194,15 +203,24 @@ app.get("/urls", (req, res) => {
 //:id is short URL - "b2xVn2"
 
 app.get("/urls/:id", (req, res) => {
+  const userID = req.cookies.user_id;
+  const user = users[userID];
   const id = req.params.id;
   const url = urlDatabase[id];
-  // It retrieves the id parameter from the request's URL. - /urls/b2xVn2
-  const longURL = url ? url.longURL : null;
-  const user = users[req.cookies.user_id];
+
   if (!user) {
-    res.redirect("/login");
+    res.status(401).send("You must be logged in to view this URL.");
+    //res.redirect("/login");
+  } else if (!url) {
+    res.status(404).send("URL not found.");
+  } else if (url.userID !== userID) {
+    res.status(403).send("You do not have permission to view this URL.");
   } else {
-    const templateVars = { id: id, longURL: longURL, user: user };
+    const templateVars = {
+      id: id,
+      longURL: url.longURL,
+      user: userID
+    };
     res.render("urls_show", templateVars);
   }
 });
@@ -249,17 +267,18 @@ app.get("/u/:id", (req, res) => {
 //*******************************************If a site visitor is not loged they cannot access /urls at all. They stay on login page. We want them to see My URLs page but not be able to delete or edit
 app.post("/urls/:id/delete", (req, res) => {
   const user = users[req.cookies.user_id];
+  const id = req.params.id;
+  const url = urlDatabase[id];
+
   if (!user) {
     res.status(401).send("You must be logged in order to delete URLs.");
+  } else if (!url) {
+    res.status(404).send("URL not found");
+  } else if (url.userID !== user.id) {
+    res.status(401).send("You do not have permission to edit this URL.");
   } else {
-    const id = req.params.id;
-    const url = urlDatabase[id];
-    if (url && url.userID === user.id) {
       delete urlDatabase[id];
       res.redirect("/urls");
-    } else {
-      res.status(404).send("Failed to delete URL");
-    }
   }
 });
 
@@ -269,21 +288,22 @@ app.post("/urls/:id/delete", (req, res) => {
 //*******************************************If a site visitor is not loged they cannot access /urls at all. They stay on login page. We want them to see My URLs page but not be able to delete or edit
 app.post("/urls/:id", (req, res) => {
   const user = users[req.cookies.user_id];
+  const id = req.params.id;
+  const url = urlDatabase[id];
+
   if (!user) {
     res.status(401).send("You must be logged in order to edit URLs.");
+  } else if (!url) {
+    res.status(404).send("URL not found");
+  } else if (url.userID !== user.id) {
+    res.status(401).send("You do not have permission to edit this URL.");
   } else {
-    const id = req.params.id;
-    const url = urlDatabase[id];
     const newLongURL = req.body.longURL;
-    if (url && url.userID === user.id) {
-      if (newLongURL) {
-        urlDatabase[id].longURL = newLongURL;
-        res.redirect("/urls");
-      } else {
-        res.status(400).send("Missing long URL");
-      }
+    if (newLongURL) {
+      urlDatabase[id].longURL = newLongURL;
+      res.redirect("/urls");
     } else {
-      res.status(404).send("URL not found");
+      res.status(400).send("Missing long URL");
     }
   }
 });
