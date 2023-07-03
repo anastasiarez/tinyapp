@@ -3,8 +3,6 @@
 //templateVars is commonly used as a convention to indicate that the object contains variables specifically intended for the template rendering process.
 //ternary operator: condition ? expression1 : expression2
 
-//**** - I wasn't able to complete these requirements - hoping for extra time to make changes
-
 const express = require("express");
 const cookieSession = require('cookie-session');
 const { getUserByEmail } = require("./helpers");
