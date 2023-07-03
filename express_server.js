@@ -96,6 +96,7 @@ app.get("/", (req, res) => {
 app.get("/register", (req, res) => {
   const user = req.session.user_id ? users[req.session.user_id] : null;
   const templateVars = { user };
+
   //to store information about the currently logged-in use
 
   if (user) {
@@ -108,6 +109,7 @@ app.get("/register", (req, res) => {
 
 app.post("/register", (req, res) => {
   const { email, password } = req.body;
+
   //using object destructuring syntax to extract the email and password properties from the req.body object.
 
   if (!email || !password) {
@@ -219,13 +221,13 @@ app.get("/urls/:id", (req, res) => {
   const url = urlDatabase[id];
 
   if (!user) {
-    res.status(401).send("You must be logged in to view this URL."); //****
+    res.status(401).send("You must be logged in to view this URL."); 
 
   } else if (!url) {
     res.status(404).send("URL not found.");
 
   } else if (url.userID !== userID) {
-    res.status(403).send("You do not have permission to view this URL."); //****
+    res.status(403).send("You do not have permission to view this URL."); 
 
   } else {
     const templateVars = {
@@ -291,13 +293,13 @@ app.post("/urls/:id/delete", (req, res) => {
   const url = urlDatabase[id];
 
   if (!user) {
-    res.status(401).send("You must be logged in order to delete URLs.");//****
+    res.status(401).send("You must be logged in order to delete URLs.");
 
   } else if (!url) {
     res.status(404).send("URL not found");
 
   } else if (url.userID !== user.id) {
-    res.status(401).send("You do not have permission to delete this URL.");//****
+    res.status(401).send("You do not have permission to delete this URL.");
 
   } else {
     delete urlDatabase[id];
@@ -314,13 +316,13 @@ app.post("/urls/:id", (req, res) => {
   const url = urlDatabase[id];
 
   if (!user) {
-    res.status(401).send("You must be logged in order to edit URLs.");//****
+    res.status(401).send("You must be logged in order to edit URLs.");
 
   } else if (!url) {
     res.status(404).send("URL not found");
 
   } else if (url.userID !== user.id) {
-    res.status(401).send("You do not have permission to edit this URL.");//****
+    res.status(401).send("You do not have permission to edit this URL.");
 
   } else {
     const newLongURL = req.body.longURL;
