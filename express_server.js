@@ -12,6 +12,7 @@ const { getUserByEmail } = require("./helpers");
 const bcrypt = require('bcrypt');
 const app = express();
 const PORT = 8080;
+<<<<<<< HEAD
 const SALT_ROUNDS = 10;
 
 app.use(cookieSession({
@@ -25,6 +26,14 @@ app.set("view engine", "ejs");
 
 
 // SUPPORTING FUNCTIONS
+=======
+const cookieParser = require('cookie-parser');
+
+app.set("view engine", "ejs");
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+>>>>>>> main
 
 function generateRandomString() {
   const str = Math.random().toString(36).slice(7); //to keep :id at 6 chars
@@ -85,6 +94,7 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
+<<<<<<< HEAD
 
 //Home Page
 
@@ -192,6 +202,19 @@ app.get("/urls/new", (req, res) => {
     res.render("urls_new", templateVars);
   }
 
+=======
+app.get("/urls/new", (req, res) => {
+  const templateVars = { username: req.cookies["username"] };
+  res.render("urls_new", templateVars);
+});
+
+app.get("/urls", (req, res) => {
+  const templateVars = {
+    urls: urlDatabase,
+    username: req.cookies["username"]
+  };
+  res.render("urls_index", templateVars);
+>>>>>>> main
 });
 
 
@@ -218,6 +241,7 @@ app.get("/urls/:id", (req, res) => {
   const userID = req.session.user_id;
   const user = users[userID];
   const id = req.params.id;
+<<<<<<< HEAD
   const url = urlDatabase[id];
 
   if (!user) {
@@ -237,12 +261,18 @@ app.get("/urls/:id", (req, res) => {
     };
     res.render("urls_show", templateVars);
   }
+=======
+  const longURL = urlDatabase[id];
+  const templateVars = { id, longURL, username: req.cookies["username"] };
+  res.render("urls_show", templateVars);
+>>>>>>> main
 });
 
 
 // Create new URL: It generates a unique ID, retrieves the "longURL" value from the request body, and stores it in the urlDatabase object. It redirects the client to the page displaying the details of the newly created URL.
 
 app.post("/urls", (req, res) => {
+<<<<<<< HEAD
   const user = users[req.session.user_id];
 
   if (!user) {
@@ -267,6 +297,15 @@ app.post("/urls", (req, res) => {
     } else {
       res.status(400).send("Please provide a valid URL (include http:// or https://)");
     }
+=======
+  const id = generateRandomString();
+  const longURL = req.body.longURL;
+  if (longURL) {
+    urlDatabase[id] = longURL;
+    res.redirect(`/urls/${id}`);
+  } else {
+    res.status(400).send("Please provide long URL");
+>>>>>>> main
   }
 });
 
@@ -290,6 +329,7 @@ app.get("/u/:id", (req, res) => {
 app.post("/urls/:id/delete", (req, res) => {
   const user = users[req.session.user_id];
   const id = req.params.id;
+<<<<<<< HEAD
   const url = urlDatabase[id];
 
   if (!user) {
@@ -304,6 +344,13 @@ app.post("/urls/:id/delete", (req, res) => {
   } else {
     delete urlDatabase[id];
     res.redirect("/urls");
+=======
+  if (urlDatabase[id]) {
+    delete urlDatabase[id];
+    res.redirect("/urls");
+  } else {
+    res.status(404).send("Failed to delete URL");
+>>>>>>> main
   }
 });
 
@@ -325,6 +372,7 @@ app.post("/urls/:id", (req, res) => {
     res.status(401).send("You do not have permission to edit this URL.");//****
 
   } else {
+<<<<<<< HEAD
     const newLongURL = req.body.longURL;
     const urlPattern = /^(ftp|http|https):\/\/[^ "]+$/; // check if url is valid
 
@@ -338,6 +386,25 @@ app.post("/urls/:id", (req, res) => {
   }
 });
 
+=======
+    res.status(400).send("Missing long URL");
+  }
+});
+
+app.post("/login", (req, res) => {
+  const username = req.body.username;
+  res.cookie("username", username);
+  res.redirect("/urls");
+});
+
+app.post("/logout", (req, res) => {
+  res.clearCookie("username");
+  res.redirect("/urls");
+});
+
+
+//sending html
+>>>>>>> main
 
 
 
