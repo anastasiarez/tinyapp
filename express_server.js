@@ -3,10 +3,11 @@
 //templateVars is commonly used as a convention to indicate that the object contains variables specifically intended for the template rendering process.
 //ternary operator: condition ? expression1 : expression2
 
+//**** - I wasn't able to complete these requirements - hoping for extra time to make changes
 
 const express = require("express");
 const cookieSession = require('cookie-session');
-const { getUserByEmail} = require("./helpers");
+const { getUserByEmail } = require("./helpers");
 
 const bcrypt = require('bcrypt');
 const app = express();
@@ -16,7 +17,7 @@ const SALT_ROUNDS = 10;
 app.use(cookieSession({
   name: 'session',
   keys: ['secret-key'],
-  maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+  maxAge: 24 * 60 * 60 * 1000 // 24hrs
 }));
 
 app.use(express.urlencoded({ extended: true }));
@@ -26,7 +27,7 @@ app.set("view engine", "ejs");
 // SUPPORTING FUNCTIONS
 
 function generateRandomString() {
-  const str = Math.random().toString(36).slice(7);
+  const str = Math.random().toString(36).slice(7); //to keep :id at 6 chars
   return str;
 }
 
@@ -34,7 +35,12 @@ const urlsForUser = (id) => {
   const userURLs = {};
   for (const url in urlDatabase) {
     if (urlDatabase[url].userID === id) {
+
+      //checking whether the userID associated with a specific URL in the urlDatabase matches the provided id.
+
       userURLs[url] = urlDatabase[url];
+
+      //code is assigning a URL object from the urlDatabase to a new object userURLs using the url as the key.
     }
   }
   return userURLs;
@@ -81,6 +87,7 @@ app.get("/urls.json", (req, res) => {
 
 
 //Home Page
+
 app.get("/", (req, res) => {
   res.redirect("/register");
 });
@@ -91,6 +98,8 @@ app.get("/", (req, res) => {
 app.get("/register", (req, res) => {
   const user = req.session.user_id ? users[req.session.user_id] : null;
   const templateVars = { user };
+  //to store information about the currently logged-in use
+
   if (user) {
     res.redirect("/urls");
   } else {
@@ -101,6 +110,8 @@ app.get("/register", (req, res) => {
 
 app.post("/register", (req, res) => {
   const { email, password } = req.body;
+  //using object destructuring syntax to extract the email and password properties from the req.body object.
+
   if (!email || !password) {
     res.status(400).send("Email and password are required.");
     return;
@@ -132,6 +143,7 @@ app.post("/register", (req, res) => {
 //Login & Logout
 
 //code checks if user's info is stored in cookies and then redirects to the appropriate pages
+
 app.get("/login", (req, res) => {
   const user = req.session.user_id ? users[req.session.user_id] : null;
   if (user) {
@@ -146,11 +158,14 @@ app.get("/login", (req, res) => {
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
   const user = getUserByEmail(email, users);
+
   if (!user) {
     res.status(403).send("Email is not registered. Please create an account.");
+
   } else if (bcrypt.compareSync(password, user.password)) {
     req.session.user_id = user.id;
     res.redirect("/urls");
+
   } else {
     res.status(403).send("Incorrect email or password");
   }
@@ -167,10 +182,13 @@ app.post("/logout", (req, res) => {
 
 app.get("/urls/new", (req, res) => {
   const user = users[req.session.user_id];
+
   if (!user) {
     res.status(401).send("Please log in to create new URLs.");
   } else {
     const templateVars = { user };
+    //to store information about the currently logged-in use
+
     res.render("urls_new", templateVars);
   }
 
@@ -186,7 +204,7 @@ app.get("/urls", (req, res) => {
   } else {
     const userURLs = urlsForUser(userID);
     const templateVars = {
-      user: user,
+      user,
       urls: userURLs
     };
     res.render("urls_index", templateVars);
@@ -204,15 +222,18 @@ app.get("/urls/:id", (req, res) => {
 
   if (!user) {
     res.status(401).send("You must be logged in to view this URL."); //****
+
   } else if (!url) {
     res.status(404).send("URL not found.");
+
   } else if (url.userID !== userID) {
     res.status(403).send("You do not have permission to view this URL."); //****
+
   } else {
     const templateVars = {
-      id: id,
-      longURL: url.longURL,
-      user: user
+      id,
+      user,
+      longURL: url.longURL
     };
     res.render("urls_show", templateVars);
   }
@@ -223,20 +244,26 @@ app.get("/urls/:id", (req, res) => {
 
 app.post("/urls", (req, res) => {
   const user = users[req.session.user_id];
+
   if (!user) {
     res.status(401).send("Please login");
+
   } else {
     const id = generateRandomString();
     const longURL = req.body.longURL;
+
     const urlPattern = /^(ftp|http|https):\/\/[^ "]+$/;
+    // check if urls are valid
 
     if (longURL && urlPattern.test(longURL)) {
       urlDatabase[id] = {
-        longURL: longURL,
+        longURL,
         userID: user.id
       };
+
       res.redirect(`/urls/${id}`);
       //redirects the client to the "/urls/:id" path, where ":id" is replaced with the generated ID. 
+
     } else {
       res.status(400).send("Please provide a valid URL (include http:// or https://)");
     }
@@ -249,6 +276,7 @@ app.post("/urls", (req, res) => {
 app.get("/u/:id", (req, res) => {
   const id = req.params.id;
   const url = urlDatabase[id];
+
   if (url) {
     res.redirect(url.longURL);
   } else {
@@ -266,10 +294,13 @@ app.post("/urls/:id/delete", (req, res) => {
 
   if (!user) {
     res.status(401).send("You must be logged in order to delete URLs.");//****
+
   } else if (!url) {
     res.status(404).send("URL not found");
+
   } else if (url.userID !== user.id) {
     res.status(401).send("You do not have permission to delete this URL.");//****
+
   } else {
     delete urlDatabase[id];
     res.redirect("/urls");
@@ -286,19 +317,28 @@ app.post("/urls/:id", (req, res) => {
 
   if (!user) {
     res.status(401).send("You must be logged in order to edit URLs.");//****
+
   } else if (!url) {
     res.status(404).send("URL not found");
+
   } else if (url.userID !== user.id) {
     res.status(401).send("You do not have permission to edit this URL.");//****
+
   } else {
     const newLongURL = req.body.longURL;
-    const urlPattern = /^(ftp|http|https):\/\/[^ "]+$/;
+    const urlPattern = /^(ftp|http|https):\/\/[^ "]+$/; // check if url is valid
 
     if (newLongURL && urlPattern.test(newLongURL)) {
       urlDatabase[id].longURL = newLongURL;
       res.redirect("/urls");
+
     } else {
       res.status(400).send("Please provide a valid URL (include http/ https)");
     }
   }
 });
+
+
+
+
+
